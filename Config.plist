@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>auth-scope</key>
+	<string>auth-scope</string>
+	<key>auth-server-url</key>
+	<string>auth-server-url</string>
+	<key>default-patient</key>
+	<string>default-patient</string>
+	<key>fhir-api</key>
+	<string>fhir-api</string>
+</dict>
+</plist>
