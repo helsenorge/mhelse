@@ -10,46 +10,41 @@ import HealthKit
 
 class HealthKitManager
 {
-    
     let healthKitStore:HKHealthStore = HKHealthStore()
     
-    func authorizeHealthKit(completion: ((success:Bool, error:NSError!) -> Void)!)
+    func authorizeHealthKit(completion: @escaping (Bool, NSError?) -> Void)
     {
         let healthKitTypesToRead = Set( arrayLiteral:
-            HKObjectType.quantityTypeForIdentifier(HKQuantityTypeIdentifierHeartRate)!,
-            HKObjectType.quantityTypeForIdentifier(HKQuantityTypeIdentifierBodyMass)!,
-            HKObjectType.quantityTypeForIdentifier(HKQuantityTypeIdentifierHeight)!)
+            HKObjectType.quantityType(forIdentifier: HKQuantityTypeIdentifier.heartRate)!,
+            HKObjectType.quantityType(forIdentifier: HKQuantityTypeIdentifier.bodyMass)!,
+            HKObjectType.quantityType(forIdentifier: HKQuantityTypeIdentifier.height)!)
         
-        healthKitStore.requestAuthorizationToShareTypes(nil, readTypes: healthKitTypesToRead) { (success, error) -> Void in
-            if(completion != nil)
-            {
-                completion(success:success,error:error)
-            }
+        healthKitStore.requestAuthorization(toShare: nil, read: healthKitTypesToRead) { (success, error) -> Void in
+            completion(success, error as NSError?)
         }
     }
     
-    func readMostRecentSample(sampleType: HKSampleType , completion: ((HKSample!, NSError!) -> Void)!)
+    func readMostRecentSample(_ sampleType: HKSampleType , completion: @escaping (HKSample?, NSError?) -> Void)
     {
-        let past = NSDate.distantPast()
-        let now = NSDate()
-        let mostRecentPredicate = HKQuery.predicateForSamplesWithStartDate(past, endDate:now, options: .None)
+        let past = Date.distantPast
+        let now = Date()
+        let mostRecentPredicate = HKQuery.predicateForSamples(withStart: past, end:now, options: HKQueryOptions())
         let sortDescriptor = NSSortDescriptor(key:HKSampleSortIdentifierStartDate, ascending: false)
         let limit = 1
         
         let sampleQuery = HKSampleQuery(sampleType: sampleType, predicate: mostRecentPredicate, limit: limit, sortDescriptors: [sortDescriptor])
             { (sampleQuery, results, error ) -> Void in
                 
-                if let queryError = error {
-                    completion(nil,error)
+                if error != nil {
+                    completion(nil,error as NSError?)
                     return;
                 }
                 
                 let mostRecentSample = results!.first as? HKQuantitySample
-                if completion != nil {
-                    completion(mostRecentSample,nil)
-                }
+                completion(mostRecentSample,nil)
+                
         }
         
-        self.healthKitStore.executeQuery(sampleQuery)
+        self.healthKitStore.execute(sampleQuery)
     }
 }

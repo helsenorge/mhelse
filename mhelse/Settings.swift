@@ -12,7 +12,7 @@ class Settings {
     
     static let sharedInstance = Settings()
     
-    private init()
+    fileprivate init()
     {
         apiUrl = ""
         patientId = ""
@@ -20,14 +20,14 @@ class Settings {
         authServerUrl = ""
         authScope = ""
         
-        if let path = NSBundle.mainBundle().pathForResource("Config", ofType: "plist")
+        if let path = Bundle.main.path(forResource: "Config", ofType: "plist")
         {
             if let config = NSDictionary(contentsOfFile: path)
             {
-                apiUrl = config.objectForKey("fhir-api") as! String
-                patientId = config.objectForKey("default-patient") as! String
-                authServerUrl = config.objectForKey("auth-server-url") as! String
-                authScope = config.objectForKey("auth-scope") as! String
+                apiUrl = config.object(forKey: "fhir-api") as! String
+                patientId = config.object(forKey: "default-patient") as! String
+                authServerUrl = config.object(forKey: "auth-server-url") as! String
+                authScope = config.object(forKey: "auth-scope") as! String
             }
         }
     }

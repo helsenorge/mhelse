@@ -30,12 +30,12 @@ class SettingsTableViewController: UITableViewController {
         // Dispose of any resources that can be recreated.
     }
     
-    override func willMoveToParentViewController(parent: UIViewController?) {
-        super.willMoveToParentViewController(parent)
+    override func willMove(toParentViewController parent: UIViewController?) {
+        super.willMove(toParentViewController: parent)
         if parent == nil {
             Settings.sharedInstance.apiUrl = apiAddress.text!
             Settings.sharedInstance.patientId = patientId.text!
-            Settings.sharedInstance.authenticate = authenticateSwitch.on
+            Settings.sharedInstance.authenticate = authenticateSwitch.isOn
             Settings.sharedInstance.authServerUrl = authServerAddress.text!
             Settings.sharedInstance.authScope = scope.text!
         }

@@ -11,14 +11,14 @@ import HealthKit
 
 class HealthArchiveManager
 {
-    func buildWeightData(weight: HKQuantitySample, patientId: String) -> NSDictionary
+    func buildWeightData(_ weight: HKQuantitySample, patientId: String) -> NSDictionary
     {
         let codingData: NSDictionary = [
             "system": "urn:std:iso:11073:10101",
             "code": "188736",
             "display": "MDC_MASS_BODY_ACTUAL"]
         let codeData: NSDictionary = ["coding": codingData]
-        let value = weight.quantity.doubleValueForUnit(HKUnit.gramUnitWithMetricPrefix(.Kilo))
+        let value = weight.quantity.doubleValue(for: HKUnit.gramUnit(with: .kilo))
         let valueData: NSDictionary = [
             "value": value,
             "unit": "kg",
@@ -28,15 +28,15 @@ class HealthArchiveManager
         return buildObservationData(weight, patientId: patientId, codeData: codeData, valueData: valueData)
     }
     
-    func buildPulseData(pulse: HKQuantitySample, patientId: String) -> NSDictionary
+    func buildPulseData(_ pulse: HKQuantitySample, patientId: String) -> NSDictionary
     {
         let codingData: NSDictionary = [
             "system": "https://rtmms.nist.gov",
             "code": "149530",
             "display": "MDC_PULS_OXIM_PULS_RATE"]
         let codeData: NSDictionary = ["coding": codingData]
-        let heartRateUnit = HKUnit(fromString: "count/min")
-        let beats = pulse.quantity.doubleValueForUnit(heartRateUnit)
+        let heartRateUnit = HKUnit(from: "count/min")
+        let beats = pulse.quantity.doubleValue(for: heartRateUnit)
         let valueData: NSDictionary = [
             "value": beats,
             "system": "https://rtmms.nist.gov",
@@ -45,67 +45,62 @@ class HealthArchiveManager
         return buildObservationData(pulse, patientId: patientId, codeData: codeData, valueData: valueData)
     }
     
-    func buildObservationData(sample: HKQuantitySample, patientId: String, codeData: NSDictionary, valueData: NSDictionary) -> NSDictionary
+    func buildObservationData(_ sample: HKQuantitySample, patientId: String, codeData: NSDictionary, valueData: NSDictionary) -> NSDictionary
     {
         let subjectData: NSDictionary = ["reference": "Patient/\(patientId)"]
-        let formatter: NSDateFormatter = NSDateFormatter()
+        let formatter: DateFormatter = DateFormatter()
         formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss"
         
         return [
             "resourceType": "Observation",
             "code": codeData,
             "subject": subjectData,
-            "effectiveDateTime": formatter.stringFromDate(sample.endDate),
+            "effectiveDateTime": formatter.string(from: sample.endDate),
             "valueQuantity": valueData]
     }
     
-    func uploadWeigth(weight: HKQuantitySample, completion: ((NSData?, NSURLResponse?, NSError?) -> Void)!)
+    func uploadWeigth(_ weight: HKQuantitySample, completion: ((Data?, URLResponse?, NSError?) -> Void)!)
     {
         let data: NSDictionary = buildWeightData(weight, patientId: Settings.sharedInstance.patientId)
         postObservation(data, completion: completion)
     }
     
-    func uploadPulse(pulse: HKQuantitySample, completion: ((NSData?, NSURLResponse?, NSError?) -> Void)!)
+    func uploadPulse(_ pulse: HKQuantitySample, completion: ((Data?, URLResponse?, NSError?) -> Void)!)
     {
         let data: NSDictionary = buildPulseData(pulse, patientId: Settings.sharedInstance.patientId)
         postObservation(data, completion: completion)
     }
     
-    func postObservation(data: NSDictionary, completion: ((NSData?, NSURLResponse?, NSError?) -> Void)!)
+    func postObservation(_ data: NSDictionary, completion: @escaping (Data?, URLResponse?, NSError?) -> Void)
     {
-        let baseURL = NSURL(string: Settings.sharedInstance.apiUrl)
-        let request = NSMutableURLRequest()
-        request.URL = NSURL(string: "Observation", relativeToURL: baseURL)
-        request.HTTPMethod = "POST"
+        let baseURL = URL(string: Settings.sharedInstance.apiUrl)
+        var request = URLRequest(url: URL(string: "Observation", relativeTo: baseURL)!)
+
+        request.httpMethod = "POST"
         request.setValue("application/json+fhir", forHTTPHeaderField: "Content-Type")
-        addAuthenticationHeader(request)
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
         
-        do
-        {
-            request.HTTPBody = try NSJSONSerialization.dataWithJSONObject(data, options: [])
-        }
-        catch
-        {
-            print("Error: cannot create JSON data")
-        }
-        
-        let sharedSession = NSURLSession.sharedSession()
-        let uploadTask = sharedSession.dataTaskWithRequest(request, completionHandler: { (data, response, error) -> Void in
-            if(completion != nil)
-            {
-                completion(data, response, error)
-            }
-        })
-        
-        uploadTask.resume()
-    }
-    
-    func addAuthenticationHeader(request: NSMutableURLRequest)
-    {
         if(Settings.sharedInstance.authenticate)
         {
             let value = "Bearer \(Settings.sharedInstance.token)"
             request.setValue(value, forHTTPHeaderField: "Authorization")
         }
+        
+        do
+        {
+            request.httpBody = try JSONSerialization.data(withJSONObject: data, options: [])
+        }
+        catch
+        {
+            print("Error: cannot create JSON data")
+        }
+
+        let uploadTask = URLSession.shared.dataTask(with: request){
+            data, response, err in
+            completion(data, response, err as NSError?)
+        }
+        
+        uploadTask.resume()
     }
+    
 }

@@ -19,13 +19,13 @@ public struct OAuthConfig {
     let nonce: String
     let state: String
     
-    var authorizationURL: NSURL {
-        return NSURL(string: "\(Settings.sharedInstance.authServerUrl)?client_id=\(clientId)&scope=\(scope)&redirect_uri=\(redirectURI)&response_type=\(responseType)&nonce=\(nonce)&state=\(state)")!
+    var authorizationURL: URL {
+        return URL(string: "\(Settings.sharedInstance.authServerUrl)?client_id=\(clientId)&scope=\(scope)&redirect_uri=\(redirectURI)&response_type=\(responseType)&nonce=\(nonce)&state=\(state)")!
     }
     
     static func getRandomString() -> String
     {
-        return NSUUID().UUIDString.stringByReplacingOccurrencesOfString("-", withString: "")
+        return UUID().uuidString.replacingOccurrences(of: "-", with: "")
     }
 
     init()

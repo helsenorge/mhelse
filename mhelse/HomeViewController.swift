@@ -36,35 +36,35 @@ class HomeViewController: UIViewController
         // Dispose of any resources that can be recreated.
     }
     
-    override func viewDidAppear(animated: Bool) {
-        loginButton.hidden = !Settings.sharedInstance.authenticate
+    override func viewDidAppear(_ animated: Bool) {
+        loginButton.isHidden = !Settings.sharedInstance.authenticate
     }
     
-    @IBAction func uploadTouched(sender: AnyObject)
+    @IBAction func uploadTouched(_ sender: AnyObject)
     {
         uploadingCount = 2
         uploadWeigth()
         uploadPulse()
     }
     
-    @IBAction func loginTouched(sender: AnyObject)
+    @IBAction func loginTouched(_ sender: AnyObject)
     {
         let provider = OAuthConfig()
         let authenticationViewController = AuthenticationViewController(provider: provider)
         
         authenticationViewController.failureHandler = { error in
-            authenticationViewController.dismissViewControllerAnimated(true, completion: nil)
+            authenticationViewController.dismiss(animated: true, completion: nil)
         }
         
         authenticationViewController.authenticationHandler = { token in
             print("Authenticated: \(token)")
-            authenticationViewController.dismissViewControllerAnimated(true, completion: nil)
-            self.loginButton.enabled = false;
-            self.loginButton.setTitle("Logged in", forState: UIControlState.Disabled)
+            authenticationViewController.dismiss(animated: true, completion: nil)
+            self.loginButton.isEnabled = false;
+            self.loginButton.setTitle("Logged in", for: UIControlState.disabled)
             Settings.sharedInstance.token = token
         }
         
-        presentViewController(authenticationViewController, animated: true, completion: nil)
+        present(authenticationViewController, animated: true, completion: nil)
     }
     
     func authorizeHealthKit()
@@ -88,14 +88,14 @@ class HomeViewController: UIViewController
     
     func finishUpload()
     {
-        uploadingCount--
+        uploadingCount -= 1
         
         if(uploadingCount == 0)
         {
-            dispatch_async(dispatch_get_main_queue(), { () -> Void in
-                let alertController = UIAlertController(title: "Success", message: "Finished uploading to Health Archive!", preferredStyle: UIAlertControllerStyle.Alert)
-                alertController.addAction(UIAlertAction(title: "Close", style: UIAlertActionStyle.Default,handler: nil))
-                self.presentViewController(alertController, animated: true, completion: nil)
+            DispatchQueue.main.async(execute: { () -> Void in
+                let alertController = UIAlertController(title: "Success", message: "Finished uploading to Health Archive!", preferredStyle: UIAlertControllerStyle.alert)
+                alertController.addAction(UIAlertAction(title: "Close", style: UIAlertActionStyle.default,handler: nil))
+                self.present(alertController, animated: true, completion: nil)
             });
         }
     }
@@ -122,10 +122,10 @@ class HomeViewController: UIViewController
             }
             else
             {
-                dispatch_async(dispatch_get_main_queue(), { () -> Void in
-                    let alertController = UIAlertController(title: "Error", message: error?.localizedDescription, preferredStyle: UIAlertControllerStyle.Alert)
-                    alertController.addAction(UIAlertAction(title: "Close", style: UIAlertActionStyle.Default,handler: nil))
-                    self.presentViewController(alertController, animated: true, completion: nil)
+                DispatchQueue.main.async(execute: { () -> Void in
+                    let alertController = UIAlertController(title: "Error", message: error?.localizedDescription, preferredStyle: UIAlertControllerStyle.alert)
+                    alertController.addAction(UIAlertAction(title: "Close", style: UIAlertActionStyle.default,handler: nil))
+                    self.present(alertController, animated: true, completion: nil)
                 });
             }
         });
@@ -141,10 +141,10 @@ class HomeViewController: UIViewController
             }
             else
             {
-                dispatch_async(dispatch_get_main_queue(), { () -> Void in
-                    let alertController = UIAlertController(title: "Error", message: error?.localizedDescription, preferredStyle: UIAlertControllerStyle.Alert)
-                    alertController.addAction(UIAlertAction(title: "Close", style: UIAlertActionStyle.Default,handler: nil))
-                    self.presentViewController(alertController, animated: true, completion: nil)
+                DispatchQueue.main.async(execute: { () -> Void in
+                    let alertController = UIAlertController(title: "Error", message: error?.localizedDescription, preferredStyle: UIAlertControllerStyle.alert)
+                    alertController.addAction(UIAlertAction(title: "Close", style: UIAlertActionStyle.default,handler: nil))
+                    self.present(alertController, animated: true, completion: nil)
                 });
             }
         });
@@ -152,25 +152,25 @@ class HomeViewController: UIViewController
 
     func updateWeight()
     {
-        let sampleType = HKSampleType.quantityTypeForIdentifier(HKQuantityTypeIdentifierBodyMass)
+        let sampleType = HKSampleType.quantityType(forIdentifier: HKQuantityTypeIdentifier.bodyMass)
         self.healthManager.readMostRecentSample(sampleType!, completion: { (mostRecentWeight, error) -> Void in
             
             if(error != nil)
             {
-                print("Error reading weight from HealthKit Store: \(error.localizedDescription)")
+                print("Error reading weight from HealthKit Store: \(error?.localizedDescription)")
                 return;
             }
             
             var weightLocalizedString = "unknown";
             self.weight = mostRecentWeight as? HKQuantitySample;
-            if let kilograms = self.weight?.quantity.doubleValueForUnit(HKUnit.gramUnitWithMetricPrefix(.Kilo))
+            if let kilograms = self.weight?.quantity.doubleValue(for: HKUnit.gramUnit(with: .kilo))
             {
-                let weightFormatter = NSMassFormatter()
-                weightFormatter.forPersonMassUse = true;
-                weightLocalizedString = weightFormatter.stringFromKilograms(kilograms)
+                let weightFormatter = MassFormatter()
+                weightFormatter.isForPersonMassUse = true;
+                weightLocalizedString = weightFormatter.string(fromKilograms: kilograms)
             }
             
-            dispatch_async(dispatch_get_main_queue(), { () -> Void in
+            DispatchQueue.main.async(execute: { () -> Void in
                 self.weightLabel.text = weightLocalizedString
             });
         });
@@ -178,25 +178,25 @@ class HomeViewController: UIViewController
     
     func updateHeight()
     {
-        let sampleType = HKSampleType.quantityTypeForIdentifier(HKQuantityTypeIdentifierHeight)
+        let sampleType = HKSampleType.quantityType(forIdentifier: HKQuantityTypeIdentifier.height)
         self.healthManager.readMostRecentSample(sampleType!, completion: { (mostRecentHeight, error) -> Void in
             
             if(error != nil)
             {
-                print("Error reading height from HealthKit Store: \(error.localizedDescription)")
+                print("Error reading height from HealthKit Store: \(error?.localizedDescription)")
                 return;
             }
             
             var heightLocalizedString = "unknown";
             self.height = mostRecentHeight as? HKQuantitySample;
-            if let meters = self.height?.quantity.doubleValueForUnit(HKUnit.meterUnit())
+            if let meters = self.height?.quantity.doubleValue(for: HKUnit.meter())
             {
-                let heightFormatter = NSLengthFormatter()
-                heightFormatter.forPersonHeightUse = true;
-                heightLocalizedString = heightFormatter.stringFromMeters(meters);
+                let heightFormatter = LengthFormatter()
+                heightFormatter.isForPersonHeightUse = true;
+                heightLocalizedString = heightFormatter.string(fromMeters: meters);
             }
             
-            dispatch_async(dispatch_get_main_queue(), { () -> Void in
+            DispatchQueue.main.async(execute: { () -> Void in
                 self.heightLabel.text = heightLocalizedString
             });
         })
@@ -204,34 +204,34 @@ class HomeViewController: UIViewController
     
     func updatePulse()
     {
-        let sampleType = HKSampleType.quantityTypeForIdentifier(HKQuantityTypeIdentifierHeartRate)
+        let sampleType = HKSampleType.quantityType(forIdentifier: HKQuantityTypeIdentifier.heartRate)
         self.healthManager.readMostRecentSample(sampleType!, completion: { (mostRecentPulse, error) -> Void in
             
             if(error != nil)
             {
-                print("Error reading pulse from HealthKit Store: \(error.localizedDescription)")
+                print("Error reading pulse from HealthKit Store: \(error?.localizedDescription)")
                 return;
             }
             
             var pulseLocalizedString = "unknown";
             self.pulse = mostRecentPulse as? HKQuantitySample;
-            let heartRateUnit = HKUnit(fromString: "count/min")
-            if let beats = self.pulse?.quantity.doubleValueForUnit(heartRateUnit)
+            let heartRateUnit = HKUnit(from: "count/min")
+            if let beats = self.pulse?.quantity.doubleValue(for: heartRateUnit)
             {
                 pulseLocalizedString = "\(String(format:"%.0f", beats)) bpm"
             }
             
-            dispatch_async(dispatch_get_main_queue(), { () -> Void in
+            DispatchQueue.main.async(execute: { () -> Void in
                 self.pulseLabel.text = pulseLocalizedString
             });
         });
     }
     
-    func printResponse(data: NSData)
+    func printResponse(_ data: Data)
     {
         do
         {
-            let dataDictionary = try NSJSONSerialization.JSONObjectWithData(data, options: NSJSONReadingOptions.AllowFragments)
+            let dataDictionary = try JSONSerialization.jsonObject(with: data, options: JSONSerialization.ReadingOptions.allowFragments)
             print(dataDictionary)
         }
         catch
