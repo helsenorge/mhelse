@@ -15,6 +15,7 @@ class HealthKitManager
     func authorizeHealthKit(completion: @escaping (Bool, NSError?) -> Void)
     {
         let healthKitTypesToRead = Set( arrayLiteral:
+            HKObjectType.quantityType(forIdentifier: HKQuantityTypeIdentifier.oxygenSaturation)!,
             HKObjectType.quantityType(forIdentifier: HKQuantityTypeIdentifier.heartRate)!,
             HKObjectType.quantityType(forIdentifier: HKQuantityTypeIdentifier.bodyMass)!,
             HKObjectType.quantityType(forIdentifier: HKQuantityTypeIdentifier.height)!)

@@ -13,7 +13,7 @@ class HomeViewController: UIViewController
 {
     let healthManager:HealthKitManager = HealthKitManager()
     let healthArchiveManager:HealthArchiveManager = HealthArchiveManager()
-    var height, weight, pulse: HKQuantitySample?
+    var height, weight, pulse, oxygenSaturation: HKQuantitySample?
     var uploadingCount = 0;
     
     @IBOutlet weak var pulseLabel: UILabel!
@@ -21,6 +21,7 @@ class HomeViewController: UIViewController
     @IBOutlet weak var heightLabel: UILabel!
     @IBOutlet weak var uploadButton: UIButton!
     @IBOutlet weak var loginButton: UIButton!
+    @IBOutlet var oxygenSatLabel: UILabel!
     
     override func viewDidLoad()
     {
@@ -42,9 +43,10 @@ class HomeViewController: UIViewController
     
     @IBAction func uploadTouched(_ sender: AnyObject)
     {
-        uploadingCount = 2
+        uploadingCount = 3
         uploadWeigth()
         uploadPulse()
+        uploadOxygenSaturation()
     }
     
     @IBAction func loginTouched(_ sender: AnyObject)
@@ -105,6 +107,7 @@ class HomeViewController: UIViewController
         updateWeight()
         updateHeight()
         updatePulse()
+        updateOxygenSaturation()
     }
     
     func showAccessDenied()
@@ -147,6 +150,50 @@ class HomeViewController: UIViewController
                     self.present(alertController, animated: true, completion: nil)
                 });
             }
+        });
+    }
+    
+    func uploadOxygenSaturation()
+    {
+        healthArchiveManager.uploadOxygenSaturation(oxygenSaturation!, completion: { (data, response, error) -> Void in
+            if (error == nil)
+            {
+                self.printResponse(data!)
+                self.finishUpload()
+            }
+            else
+            {
+                DispatchQueue.main.async(execute: { () -> Void in
+                    let alertController = UIAlertController(title: "Error", message: error?.localizedDescription, preferredStyle: UIAlertControllerStyle.alert)
+                    alertController.addAction(UIAlertAction(title: "Close", style: UIAlertActionStyle.default,handler: nil))
+                    self.present(alertController, animated: true, completion: nil)
+                });
+            }
+        });
+    }
+    
+    func updateOxygenSaturation()
+    {
+        let sampleType = HKSampleType.quantityType(forIdentifier: HKQuantityTypeIdentifier.oxygenSaturation)
+        self.healthManager.readMostRecentSample(sampleType!, completion: { (mostRecentOxyGenSaturation, error) -> Void in
+            
+            if(error != nil)
+            {
+                print("Error reading oxygen saturation from HealthKit Store: \(error?.localizedDescription)")
+                return;
+            }
+            
+            var localizedString = "unknown";
+            self.oxygenSaturation = mostRecentOxyGenSaturation as? HKQuantitySample;
+            let unit = HKUnit(from: "%")
+            if let percent = self.oxygenSaturation?.quantity.doubleValue(for: unit)
+            {
+                localizedString = "\(String(format: "%.0f%", percent * 100)) %"
+            }
+            
+            DispatchQueue.main.async(execute: { () -> Void in
+                self.oxygenSatLabel.text = localizedString
+            });
         });
     }
 

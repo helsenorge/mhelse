@@ -45,6 +45,24 @@ class HealthArchiveManager
         return buildObservationData(pulse, patientId: patientId, codeData: codeData, valueData: valueData)
     }
     
+    func buildOxygenSaturation(_ oxygenSaturation: HKQuantitySample, patientId: String) -> NSDictionary
+    {
+        let codingData: NSDictionary = [
+            "system": "urn:std:iso:11073:10101",
+            "code": "150456",
+            "display": "MDC_PULS_OXIM_SAT_O2"]
+        let codeData: NSDictionary = ["coding": codingData]
+        let unit = HKUnit(from: "%")
+        let percent = oxygenSaturation.quantity.doubleValue(for: unit) * 100
+        let valueData: NSDictionary = [
+            "value": percent,
+            "system": "urn:std:iso:11073:10101",
+            "code": "262688"]
+        
+        return buildObservationData(oxygenSaturation, patientId: patientId, codeData: codeData, valueData: valueData)
+    }
+
+    
     func buildObservationData(_ sample: HKQuantitySample, patientId: String, codeData: NSDictionary, valueData: NSDictionary) -> NSDictionary
     {
         let subjectData: NSDictionary = ["reference": "Patient/\(patientId)"]
@@ -70,6 +88,13 @@ class HealthArchiveManager
         let data: NSDictionary = buildPulseData(pulse, patientId: Settings.sharedInstance.patientId)
         postObservation(data, completion: completion)
     }
+    
+    func uploadOxygenSaturation(_ oxygenSaturation: HKQuantitySample, completion: ((Data?, URLResponse?, NSError?) -> Void)!)
+    {
+        let data: NSDictionary = buildOxygenSaturation(oxygenSaturation, patientId: Settings.sharedInstance.patientId)
+        postObservation(data, completion: completion)
+    }
+
     
     func postObservation(_ data: NSDictionary, completion: @escaping (Data?, URLResponse?, NSError?) -> Void)
     {
